@@ -35,6 +35,28 @@
   <link rel="manifest" href="manifest.json">
 
   <script>
+    // ── Intl.v8BreakIterator shim ─────────────────────────────────────────
+    // Flutter's release/CanvasKit build accesses Intl.v8BreakIterator (deprecated
+    // in Chrome) for text word-breaking. This shim reads the value once and
+    // redefines it as a plain value property so that Flutter's subsequent
+    // accesses do NOT trigger the browser deprecation warning.
+    (function () {
+      try {
+        if (typeof Intl !== 'undefined' && 'v8BreakIterator' in Intl) {
+          var _v8bi = Intl['v8BreakIterator'];
+          if (_v8bi) {
+            Object.defineProperty(Intl, 'v8BreakIterator', {
+              value: _v8bi,
+              writable: true,
+              configurable: true,
+              enumerable: false,
+            });
+          }
+        }
+      } catch (_) {}
+    }());
+    // ─────────────────────────────────────────────────────────────────────
+
     // ── PWA Install prompt ────────────────────────────────────────────────
     window.pwaInstallAvailable = false;
     window.deferredInstallPrompt = null;
