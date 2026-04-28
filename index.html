@@ -35,6 +35,35 @@
   <link rel="manifest" href="manifest.json">
 
   <script>
+    // ── Intl.v8BreakIterator — neutralize deprecated getter ───────────────
+    // Flutter's bootstrap (flutter_bootstrap.js) does:
+    //   typeof Intl.v8BreakIterator  (to detect hasChromiumBreakIterators)
+    // Accessing the native getter is enough for Chrome to fire its V8
+    // UseCounter and show the DevTools deprecation warning.
+    //
+    // Fix: inspect the property descriptor WITHOUT invoking the getter
+    // (Object.getOwnPropertyDescriptor does not call the getter).
+    // If it is a native accessor (get function), redefine it as a plain
+    // value so every subsequent access hits our stub — not the deprecated getter.
+    //
+    // We use a truthy stub (function) so flutter_bootstrap.js still sees
+    // hasChromiumBreakIterators = true → Flutter picks the lighter skwasm
+    // renderer. The Dart/WASM runtime always prefers Intl.Segmenter when
+    // available (Chrome 99+), so the stub is never actually instantiated.
+    (function () {
+      try {
+        var _d = Object.getOwnPropertyDescriptor(Intl, 'v8BreakIterator');
+        if (_d && typeof _d.get === 'function') {
+          Object.defineProperty(Intl, 'v8BreakIterator', {
+            value: function IntlV8BreakIteratorStub() {},
+            writable: true,
+            configurable: true,
+            enumerable: false,
+          });
+        }
+      } catch (_) {}
+    }());
+    // ─────────────────────────────────────────────────────────────────────
 
     // ── PWA Install prompt ────────────────────────────────────────────────
     window.pwaInstallAvailable = false;
